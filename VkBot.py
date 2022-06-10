@@ -9,9 +9,13 @@ class VkBot(object):
         self.vk = vk_api.VkApi(token=token)
         self.longpool = VkLongPoll(self.vk)
 
-        self.pool = {'Расписание': '/schedule', 'Неделя': '/week'}
-        self.answers = {'/schedule': 'Вот твое расписание!', '/week': 'Сейчас'}
-        self.commands = ['/schedule', '/week', '/help']
+        self.pool = {'Расписание': '/schedule',
+                     'Неделя': '/week'}
+        self.answers = {'/schedule': 'Вот твое расписание!',
+                        '/week': 'Сейчас идет: '}
+        self.commands = ['/schedule',
+                         '/week',
+                         '/help']
         self.urls = {'/schedule': 'https://vk.com/club213831540?z=photo-213831540_457239017%2Falbum-213831540_00%2Frev'}
 
     @classmethod
@@ -46,7 +50,7 @@ class VkBot(object):
     def command_week(self, user_id):
         date = datetime.today().isocalendar()[1]
         start_date = datetime(2022, 9, 1).isocalendar()[1]
-        self.write_msg(user_id, f'Сейчас идет: {date - start_date + 1} неделя')
+        self.write_msg(user_id, f'{self.answers["/week"]} {date - start_date + 1} неделя')
 
 
 if __name__ == '__main__':
