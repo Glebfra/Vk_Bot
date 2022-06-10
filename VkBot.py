@@ -22,7 +22,7 @@ class VkBot(object):
             Далее расположены переменные для дебаггинга
         """
         self.debug_password = 'Kotiki123'
-        self.debug_commands = ['/view']
+        self.debug_commands = ['/view', '/stop', '/help']
         self.is_debugging = False
         self.debugger_id = None
 
@@ -84,11 +84,16 @@ class VkBot(object):
     def debug_command_view(self, debugger_id):
         self.write_msg(debugger_id, 'Вы вошли в окно установки параметров\n'
                                     'Сейчас известны такие параметры\n'
-                                    '0. Вернуться обратно\n'
                                     f'1. Список команд: {self.commands}\n'
                                     f'2. Словарь ответов: {self.answers}\n'
                                     f'3. Пул команд и ключевых слов: {self.pool}\n'
                                     f'4. Ссылки: {self.urls}')
+
+    def debug_command_stop(self, debugger_id):
+        raise Exception
+
+    def debug_command_help(self, debugger_id):
+        self.write_msg(debugger_id, f'Сейчас доступны такие команды, как: {self.debug_commands}')
 
     def debug_command_quit(self, debugger_id):
         self.write_msg(debugger_id, 'Вы успешно вышли из окна дебага. Удачи!!!')
