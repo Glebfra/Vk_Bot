@@ -17,6 +17,14 @@ class VkBot(object):
                          '/week',
                          '/help']
         self.urls = {'/schedule': 'https://vk.com/club213831540?z=photo-213831540_457239017%2Falbum-213831540_00%2Frev'}
+        self.start_week = datetime(2022, 9, 1).isocalendar()[1]
+        """
+            Далее расположены переменные для дебаггинга
+        """
+        self.debug_password = 'Kotiki123'
+        self.debug_commands = ['/view']
+        self.is_debugging = False
+        self.debugger_id = None
 
     @classmethod
     def create_bot(cls):
@@ -38,6 +46,8 @@ class VkBot(object):
                     eval(f'self.command_{request.removeprefix("/")}({event.user_id})')
                 elif request in self.pool:
                     eval(f'self.command_{self.pool[request].removeprefix("/")}({event.user_id})')
+                elif request == '/debug':
+                    self.command_debug(event.user_id)
                 else:
                     self.write_msg(event.user_id, 'Непонятная мне команда :-(')
 
@@ -49,8 +59,36 @@ class VkBot(object):
 
     def command_week(self, user_id):
         date = datetime.today().isocalendar()[1]
-        start_date = datetime(2022, 9, 1).isocalendar()[1]
-        self.write_msg(user_id, f'{self.answers["/week"]} {date - start_date + 1} неделя')
+        self.write_msg(user_id, f'{self.answers["/week"]} {date - self.start_week + 1} неделя')
+
+    def command_debug(self, debugger_id):
+        self.write_msg(debugger_id, 'Введите пароль для деббагинга: ')
+        for event in self.longpool.listen():
+            if event.type == VkEventType.MESSAGE_NEW and event.to_me \
+                    and event.user_id == debugger_id:
+                request = event.text.capitalize()
+                if request == self.debug_password and not self.is_debugging:
+                    self.write_msg(debugger_id, 'Вы вошли в окно дебага')
+                    self.is_debugging = True
+                elif self.is_debugging and request in self.debug_commands:
+                    eval(f'self.debug_command_{request.removeprefix("/")}({debugger_id})')
+                elif self.is_debugging and request == '/quit':
+                    self.debug_command_quit(debugger_id)
+                    return 0
+                else:
+                    self.write_msg(event.user_id, 'Непонятная мне команда :-(')
+
+    def debug_command_view(self, debugger_id):
+        self.write_msg(debugger_id, 'Вы вошли в окно установки параметров')
+        self.write_msg(debugger_id, 'Сейчас известны такие параметры')
+        self.write_msg(debugger_id, f'0. Вернуться обратно')
+        self.write_msg(debugger_id, f'1. Список команд: {self.commands}')
+        self.write_msg(debugger_id, f'2. Словарь ответов: {self.answers}')
+        self.write_msg(debugger_id, f'3. Пул команд и ключевых слов: {self.pool}')
+
+    def debug_command_quit(self, debugger_id):
+        self.write_msg(debugger_id, 'Вы успешно вышли из окна дебага. Удачи!!!')
+        self.is_debugging = False
 
 
 if __name__ == '__main__':
