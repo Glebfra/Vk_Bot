@@ -77,14 +77,18 @@ class VkBot(object):
                     return 0
                 else:
                     self.write_msg(event.user_id, 'Непонятная мне команда :-(')
+            elif event.type == VkEventType.MESSAGE_NEW and event.to_me \
+                    and event.user_id != debugger_id:
+                self.write_msg(event.user_id, 'Прости, но сейчас идет дебаг моей программы!')
 
     def debug_command_view(self, debugger_id):
-        self.write_msg(debugger_id, 'Вы вошли в окно установки параметров')
-        self.write_msg(debugger_id, 'Сейчас известны такие параметры')
-        self.write_msg(debugger_id, f'0. Вернуться обратно')
-        self.write_msg(debugger_id, f'1. Список команд: {self.commands}')
-        self.write_msg(debugger_id, f'2. Словарь ответов: {self.answers}')
-        self.write_msg(debugger_id, f'3. Пул команд и ключевых слов: {self.pool}')
+        self.write_msg(debugger_id, 'Вы вошли в окно установки параметров\n'
+                                    'Сейчас известны такие параметры\n'
+                                    '0. Вернуться обратно\n'
+                                    f'1. Список команд: {self.commands}\n'
+                                    f'2. Словарь ответов: {self.answers}\n'
+                                    f'3. Пул команд и ключевых слов: {self.pool}\n'
+                                    f'4. Ссылки: {self.urls}')
 
     def debug_command_quit(self, debugger_id):
         self.write_msg(debugger_id, 'Вы успешно вышли из окна дебага. Удачи!!!')
