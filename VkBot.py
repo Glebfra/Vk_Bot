@@ -1,30 +1,27 @@
+import asyncio
+
 import vk_api
+
 from vk_api.longpoll import VkLongPoll, VkEventType
 from datetime import datetime
+from src.messages import Message
 
 
 class VkBot(object):
     def __init__(self, token):
         self._token = token
         self.vk = vk_api.VkApi(token=token)
+        self.message = Message(self.vk)
+
         self.longpool = VkLongPoll(self.vk)
 
-        self.pool = {'Расписание': '/schedule',
-                     'Неделя': '/week'}
-        self.answers = {'/schedule': 'Вот твое расписание!',
-                        '/week': 'Сейчас идет: '}
-        self.commands = ['/schedule',
-                         '/week',
-                         '/help']
-        self.urls = {'/schedule': 'https://vk.com/club213831540?z=photo-213831540_457239017%2Falbum-213831540_00%2Frev'}
-        self.start_week = datetime(2022, 9, 1).isocalendar()[1]
-        """
-            Далее расположены переменные для дебаггинга
-        """
+        """Параметры для асинхронного исполнения кода"""
+        self.event_loop = asyncio.get_event_loop()
+
+        """Далее расположены переменные для дебаггинга"""
         self.debug_password = 'Kotiki123'
         self.debug_commands = ['/view', '/stop', '/help']
         self.is_debugging = False
-        self.debugger_id = None
 
     @classmethod
     def create_bot(cls):
@@ -34,32 +31,10 @@ class VkBot(object):
                 token += temp_token
         return cls(token=token)
 
-    def write_msg(self, user_id, msg, attachment=None):
-        self.vk.method('messages.send', {'user_id': user_id, 'message': msg,
-                                         'random_id': 0, 'attachment': attachment})
-
-    def msg_loop(self):
+    def loop(self):
         for event in self.longpool.listen():
             if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                request = event.text.capitalize()
-                if request in self.commands:
-                    eval(f'self.command_{request.removeprefix("/")}({event.user_id})')
-                elif request in self.pool:
-                    eval(f'self.command_{self.pool[request].removeprefix("/")}({event.user_id})')
-                elif request == '/debug':
-                    self.command_debug(event.user_id)
-                else:
-                    self.write_msg(event.user_id, 'Непонятная мне команда :-(')
-
-    def command_help(self, user_id):
-        self.write_msg(user_id, f'Сейчас доступны такие команды: {self.commands}')
-
-    def command_schedule(self, user_id):
-        self.write_msg(user_id, self.answers['/schedule'], attachment=self.urls['/schedule'])
-
-    def command_week(self, user_id):
-        date = datetime.today().isocalendar()[1]
-        self.write_msg(user_id, f'{self.answers["/week"]} {date - self.start_week + 1} неделя')
+                self.message.messages_logic(event)
 
     def command_debug(self, debugger_id):
         self.write_msg(debugger_id, 'Введите пароль для деббагинга: ')
@@ -102,3 +77,4 @@ class VkBot(object):
 
 if __name__ == '__main__':
     vkBot = VkBot.create_bot()
+    vkBot.loop()
