@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from vk_api.longpoll import VkLongPoll, VkEventType
 
 
@@ -19,14 +20,14 @@ class Message(object):
 
         self.stupid_questions = [
             'Что?', 'Что', 'Кто', 'Где', 'Когда', 'Ты кто?', 'Ты кто', 'Катя?', 'Катя', 'Чд', 'Кд', 'Привет',
-            'Привет катя', 'Как дела', 'Что делаешь', 'Что делаешь?', 'Как дела?'
+            'Привет катя', 'Как дела', 'Что делаешь', 'Что делаешь?', 'Как дела?', 'Хай', 'Здарова'
         ]
 
         self.urls = {'/schedule': 'wall-213831540_5'}
         self.start_week = datetime(2022, 9, 1).isocalendar()[1]
 
         self.group_id = 213831540
-        self.users = self.vk.method('groups.getMembers', {'group_id': self.group_id})
+        self.users = self.vk.method('groups.getMembers', {'group_id': self.group_id})['items']
         self.special_ids = [199712354, 89529839]
         self.kate_id = 89529839
 
@@ -42,6 +43,10 @@ class Message(object):
         """
         self.vk.method('messages.send', {'user_id': user_id, 'message': message,
                                          'random_id': 0, 'attachment': attachment})
+
+    def write_message_to_all(self, message, attachment=None) -> None:
+        for send_to_id in self.users:
+            self.write_message(send_to_id, message, attachment)
 
     def messages_logic(self, event) -> None:
         """
@@ -65,12 +70,15 @@ class Message(object):
                                                       'Я могу кинуть тебе расписание по ключевому слову: Расписание, '
                                                       'Или напомнить тебе день недели который идет сейчас по ключевому '
                                                       'слову: Неделя\n'
-                                                      'Или можешь задать вопрос, я его перенаправлю Кате')
+                                                      'Или можешь задать вопрос, я его перенаправлю Кате\n'
+                                                      'Также я смотрю за обновлениями на сайте Альпина Т.Ю., '
+                                                      'и если там будет что-то новое, относящееся к 06-012, '
+                                                      'я тебя обязательно оповещу')
                 else:
                     self.write_message(self.kate_id,
                                        f'Пользователь https://vk.com/id{event.user_id} написал: "{request}"')
                     self.write_message(event.user_id, f'Сообщение {request} было отправлено Кате')
-                    log.write(f'[QUESTION_TO_KATE] Пользователь https://vk.com/id{event.user_id} написал: "{request}"')
+                    log.write(f'[QUESTION_TO_KATE] Пользователь https://vk.com/id{event.user_id} написал: "{request}"\n')
             except:
                 self.write_message(event.user_id, 'Непонятная мне команда :-(')
 
@@ -97,8 +105,8 @@ class Message(object):
             if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.user_id == user_id:
                 text = event.text
                 break
-        for send_to_id in self.users['items']:
-            self.write_message(send_to_id, f'Отправление всем! {text}')
+
+        self.write_message_to_all(f'Отправление всем! {text}')
 
     def command_change_schedule(self):
         """Команда /change_schedule"""
@@ -116,3 +124,8 @@ class Message(object):
         else:
             self.write_message(user_id, f'Вы уже админ')
         pass
+
+    def news_update_message(self, news):
+        self.write_message(199712354, f'Хаай привет всем! Там тов. Т.Ю. вспомнил о 06-012 заходи быстрее\n'
+                                      f'Тема: {news["title"]}\n'
+                                      f'Ссылка: {news["link"]}')
